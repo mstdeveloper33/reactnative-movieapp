@@ -2,6 +2,7 @@ import { View, Text, Dimensions, TouchableWithoutFeedback, Image } from 'react-n
 import React from 'react';
 import Carousel from 'react-native-reanimated-carousel';
 import { useNavigation } from '@react-navigation/native';
+import { image500 } from '../api/moviedb';
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,6 +33,8 @@ export default function TrendingMovies({data}) {
                     parallaxScrollingScale: 0.85,
                     parallaxScrollingOffset: width / 2,
                 }}
+                autoPlay={true}
+                autoPlayInterval={5000}
                 windowSize={3}
                 snapToAlignment="center"
                 itemWidth={width * 0.7} // Slide genişliği
@@ -44,6 +47,7 @@ export default function TrendingMovies({data}) {
 }
 
 const MovieCard = ({item, handleClick}) => {
+    console.log(item.poster_path);
     return (
         <TouchableWithoutFeedback onPress={() => handleClick(item)}>
             <View style={{
@@ -53,7 +57,8 @@ const MovieCard = ({item, handleClick}) => {
                 paddingHorizontal: 10
             }}>
                 <Image
-                    source={require("../assets/marvel.png")}
+                    //source={require("../assets/marvel.png")}
+                    source={{ uri: image500(item.poster_path) }}
                     style={{
                         width: width * 0.6,
                         height: height * 0.4,
