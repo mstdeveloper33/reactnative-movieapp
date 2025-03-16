@@ -11,6 +11,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Cast from '../components/cast';
 import MovieList from '../components/movieList';
 import Loading from '../components/loading';
+import { fallbackMoviePoster, fetchMovieDetails , fetchMovieCredits , fetchSimilarMovies} from '../api/moviedb';
+import { image500 } from '../api/moviedb';
 
 
 
@@ -23,12 +25,35 @@ export default function MovieScreen() {
   const {params : item} = useRoute();
   const [isFavourite, toggleFavourite] = useState(false);
   const navigation = useNavigation();
-  const [cast, setCast] = useState([1,2,3,4,5]);
-  const [similarMovies, setSimilarMovies] = useState([1,2,3,4,5]);
+  const [cast, setCast] = useState([]);
+  const [similarMovies, setSimilarMovies] = useState([]);
+  const [movie , setMovie] = useState({});
   let movieName = "Ant-Man and the Wasp: Quantumania";
   useEffect(() => {
-    
+    setLoading(true);
+    getMovieDetails(item.id);
+    getMovieCredits(item.id);
+    getSimilarMovies(item.id);
+
   }, [item])
+
+  const getMovieDetails = async (id) => {
+    const data = await fetchMovieDetails(id);
+    if(data) setMovie(data);
+    setLoading(false);
+  }
+
+  const getMovieCredits = async (id) => {
+    const data = await fetchMovieCredits(id);
+    if(data) setCast(data.cast);
+    setLoading(false);
+  }
+
+  const getSimilarMovies = async (id) => {
+    const data = await fetchSimilarMovies(id);
+    if(data && data.results) setSimilarMovies(data.results);
+    setLoading(false);
+  }
 
   return (
     <ScrollView
@@ -52,7 +77,8 @@ export default function MovieScreen() {
             ): (
               <View>
               <Image
-                source={require("../assets/marvel.png")}
+                // source={require("../assets/marvel.png")}
+                source={{ uri: image500(movie?.poster_path || fallbackMoviePoster) }}
                 style={{
                   width,
                   height: height * 0.55,
@@ -75,25 +101,39 @@ export default function MovieScreen() {
 
       <View style= {{marginTop: -(height * 0.4)}} className= "space-y-3">
         {/* Title */}
-        <Text className ="text-white text-center text-3xl font-bold tracking-wider>">{movieName}</Text>
+        <Text className ="text-white text-center text-3xl font-bold tracking-wider>">{movie?.title}</Text>
         {/* Status , release , runtime */}
-        <Text className= "text-neutral-400 font-semibold text-base text-center">
-          Released - 2020 - 170 min
-        </Text>
-        {/* Genres */}
-        <View className = "flex-row justify-center space-x-2">
-          <Text className = "text-neutral-400 font-semibold text-base text-center">Action |</Text>
-          <Text className = "text-neutral-400 font-semibold text-base text-center"> Adventure |</Text>
-          <Text className = "text-neutral-400 font-semibold text-base text-center"> Comedy</Text>
+          {
+            movie?.id?(
+              <Text className= "text-neutral-400 font-semibold text-base text-center">
+              {movie?.status} - {movie?.release_date?.split("-")[0]} - {movie?.runtime} min
+            </Text>
+            ): null
+            
+          }
+         <View className = "flex-row justify-center space-x-2">
+          {/* Genres */}
+          {
+            movie?.genres?.map((genre, index) => {
+              let showDot = index +1 != movie.genres.length;
+              return (
+                <Text key={index} className= "text-neutral-400 font-semibold text-base text-center">{genre?.name} {showDot && "-"}</Text>
+              )
+            })
+          }
         </View>
         {/* Description */}
-        <View>
-          <Text className = "text-neutral-400 mx-4 tracking-wide">Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi, voluptas.</Text> 
-          </View> 
-          {/* Cast */}
-          <Cast navigation={navigation} cast = {cast}/>
-          <MovieList title = "Similar Movies" hideSeeAll={true} data={similarMovies} />
-      </View>
+
+            {
+                movie?.overview && (
+                    <Text className= "text-neutral-400 font-semibold text-base text-center">{movie?.overview}</Text>
+                )
+            }
+        </View>
+       {/* Cast */}
+       {cast.length > 0 && <Cast navigation={navigation} cast = {cast}/>}
+          {/* Similar Movies */}
+      {similarMovies.length > 0 && <MovieList title="Similar Movies" data={similarMovies} hideSeeAll={true} />}
         
        
     </ScrollView>
